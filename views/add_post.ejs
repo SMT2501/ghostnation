@@ -1,0 +1,33 @@
+<!-- views/add_post.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Post</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <%- include('./partials/header.ejs') %>
+
+
+    <main>
+        <section class="add-post">
+            <form action="/add_post" method="POST" enctype="multipart/form-data">
+                <div class="add-post-container">
+                    <h2 class="add-post-title">Add New Post</h2>
+                    <textarea class="add-post-content" name="content" placeholder="Enter your post content here..." required></textarea>
+                    <div class="upload-file">
+                        <label for="file">Upload File:</label>
+                        <input type="file" id="file" name="file">
+                    </div>
+                    <button class="btn" type="submit">Add Post</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+</html>

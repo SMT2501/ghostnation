@@ -1,0 +1,40 @@
+<!-- views/edit_profile.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - YourDJPlatform</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <% include('./partials/header.ejs') %>
+
+    <main>
+        <section class="edit-profile-form">
+            <h2>Edit Profile</h2>
+            <!-- Display any error messages -->
+            <% if (error) { %>
+                <p class="error-message"><%= error %></p>
+            <% } %>
+            <!-- Edit profile form -->
+            <form action="/edit_profile" method="POST" enctype="multipart/form-data">
+
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" value="<%= user ? user.username : '' %>">
+            
+                <label for="bio">Bio:</label>
+                <textarea id="bio" name="bio" rows="4" cols="50"><%= user ? user.bio : '' %></textarea>
+            
+                <label for="placesWorked">Gigs:</label>
+                <textarea id="placesWorked" name="placesWorked" rows="4" cols="50"><%= user ? user.placesWorked : '' %></textarea>            
+                <button type="submit" class="btn">Save Changes</button>
+            </form>            
+            
+        </section>
+    </main>
+
+    <% include('./partials/footer.ejs') %>
+</body>
+</html>

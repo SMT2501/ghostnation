@@ -1,0 +1,30 @@
+Based on the features and pages we've discussed, here's a summary of what we've covered for the front-end development:
+
+1. **Homepage (`index.ejs`)**:
+   - Displaying a hero section with a call-to-action button.
+   - Providing information about the platform.
+   - Links to login, signup, and profile pages.
+
+2. **Login Page (`login.ejs`)**:
+   - Form for users to enter their email and password.
+   - Link to the signup page for new users.
+
+3. **Signup Page (`signup.ejs`)**:
+   - Form for users to create a new account with their name, email, and password.
+   - Link to the login page for existing users.
+
+4. **Profile Page (`profile.ejs`)**:
+   - Displaying the user's profile picture, bio, and places worked.
+   - Placeholder for displaying uploaded pictures/videos.
+
+5. **Browse DJs Page (`djs.ejs`)**:
+   - Form for filtering DJs by location and ratings.
+   - Placeholder for displaying a list of DJs.
+
+6. **Header (`header.ejs`)**:
+   - Navigation links to homepage, browse DJs page, and user profile.
+
+7. **Footer (`footer.ejs`)**:
+   - Basic footer section with links or contact information.
+
+With these components in place, users can navigate through the website, create accounts, log in, view their profiles, and browse DJs. Depending on your project requirements, you may need to further refine and add features to these pages. Let me know if you have any specific requirements or if there's anything else you'd like to add to the front-end!

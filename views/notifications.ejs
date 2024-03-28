@@ -1,0 +1,36 @@
+<!-- views/notifications.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - YourDJPlatform</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <%- include('./partials/header.ejs') %>
+
+    <main>
+        <section class="notifications">
+            <h2>Notifications</h2>
+            <ul>
+                <% notifications.forEach(notification => { %>
+                    <li>
+                        <h3><%= notification.notification_type %></h3>
+                        <p><%= notification.notification_message %></p>
+                        <p><%= notification.notification_time %></p>
+                        <% if (!notification.is_read) { %>
+                            <form action="/mark_as_read/<%= notification.notification_id %>" method="POST">
+                                <button type="submit" class="btn">Mark as Read</button>
+                            </form>
+                        <% } %>
+                    </li>
+                <% }); %>
+            </ul>
+        </section>
+    </main>
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+</html>

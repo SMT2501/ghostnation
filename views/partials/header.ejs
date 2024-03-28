@@ -1,0 +1,33 @@
+<header>
+    <!-- Replace the heading with an image -->
+    <a href="/">
+        <img src="/images/GN%20B.png" alt="Ghost Nation" class="logo">
+    </a>
+    <nav>
+        <ul>
+            <li><a href="/djs">Browse DJs</a></li>
+            <li><a href="/add_post">Add A Post</a></li>
+            <li><a href="/bookings">Booking</a></li>
+            <li><a href="/notifications">Notification</a></li>
+            <% if (!user) { %> <!-- Check if user is not defined -->
+                <li>
+                    <a href="/login" class="btn">Login</a>
+                    <a href="/signup" class="btn">Signup</a>
+                </li>
+            <% } else { %> <!-- If user is defined (logged in) -->
+                <% if (path === '/profile') { %> <!-- Check if current page is the profile page -->
+                    <li>
+                        <a href="/logout" class="btn">Logout</a> <!-- Show logout button only on the profile page -->
+                    </li>
+                <% } else { %>
+                    <li class="profile-link">
+                        <a href="/profile">
+                            <!-- Display user's profile picture as a clickable link -->
+                            <img src="<%= user.profile_picture %>" alt="Profile Picture" class="profile-picture-link">
+                        </a>
+                    </li>
+                <% } %>
+            <% } %>
+        </ul>
+    </nav>
+</header>

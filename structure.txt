@@ -1,0 +1,53 @@
+project-root/
+│
+├── public/
+│   ├── css/
+│   ├── js/
+│   ├── images/
+│   └── index.html
+│
+├── views/
+│   ├── partials/
+│   │   ├── header.ejs
+│   │   └── footer.ejs
+│   ├── index.ejs
+│   ├── login.ejs
+│   ├── signup.ejs
+│   ├── add_post.ejs
+│   ├── bookings.ejs
+│   ├── djs.ejs
+│   ├── edit_profile_picture.ejs
+│   ├── edit_profile.ejs
+│   └── notifications.ejs
+│
+│
+├── routes/
+│   ├── index.js
+│   ├── auth.js
+│   └── profile.js
+│
+├── controllers/
+│   ├── indexController.js
+│   ├── authController.js
+│   └── profileController.js
+│
+├── models/
+│   ├── user.js
+│   └── dj.js
+│
+├── dal.js
+├── server.js
+└── package.json
+
+
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+    );
+
+CREATE TABLE djs (
+    dj_id INT AUTO_INCREMENT PRIMARY KEY,
+    djname VARCHAR(255) NOT NULL
+);

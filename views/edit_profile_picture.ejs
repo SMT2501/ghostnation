@@ -1,0 +1,33 @@
+<!-- views/edit_profile_picture.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile Picture - YourDJPlatform</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <%- include('./partials/header.ejs') %>
+
+    <main>
+        <section class="edit-profile-picture">
+            <h2>Edit Profile Picture</h2>
+            <div class="current-profile-picture">
+                <h3>Current Profile Picture</h3>
+                <img src="<%= user.profile_picture %>" alt="Profile Picture" class="profile-picture">
+            </div>
+            <form action="/edit_profile_picture" method="POST" enctype="multipart/form-data">
+                <label for="newProfilePicture">Choose New Profile Picture:</label>
+                <input type="file" id="newProfilePicture" name="new_profile_picture">
+                <input type="checkbox" id="removeProfilePicture" name="remove_profile_picture">
+                <label for="removeProfilePicture">Remove Profile Picture</label>
+                <button type="submit" class="btn">Save Changes</button>
+            </form>
+        </section>
+    </main>
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!-- views/profile.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - YourDJPlatform</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <%- include('./partials/header.ejs') %>
+
+    <main>
+        <section class="user-profile">
+            <div class="profile-header">
+                <!-- Wrap the img tag inside an anchor tag -->
+                <a href="/edit_profile_picture">
+                    <img src="<%= user.profile_picture %>" alt="Profile Picture" class="profile-picture">
+                </a>
+                <h2><%= user.username %></h2>
+                <p>Bio: <%= user.bio %></p>
+            </div>
+            
+            <div class="places-worked">
+                <h3>Places Worked</h3>
+                <p><%= user.placesWorked %></p>
+            </div>
+            <div class="media">
+                <h3>Media</h3>
+                <!-- Display uploaded pictures/videos here -->
+            </div>
+            <!-- Add an Edit Profile link/button -->
+            <a href="/edit_profile" class="btn">Edit Profile</a>
+
+        </section>
+    </main>
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+</html>

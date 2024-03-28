@@ -1,0 +1,48 @@
+<!-- views/index.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - YourDJPlatform</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* CSS for positioning the user's name */
+        .user-name {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 16px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Pass null as user to the header partial -->
+    <%- include('./partials/header.ejs', { user: user }) %>
+
+    <main>
+        <section class="hero">
+            <h2>Find Your Perfect DJ</h2>
+            <p>Discover talented DJs for your events. Browse, rate, and book with ease.</p>
+            <a href="/djs" class="btn">Browse DJs</a>
+        </section>
+        <section class="about">
+            <h2>Ghost Nation</h2>
+            <p>Ghost Nation is a platform connecting DJs and event organizers. We make it easy for you to find the
+                right DJ for your event and book them hassle-free.</p>
+        </section>
+    </main>
+
+    <!-- Display the user's name if available -->
+    <% if (typeof user !== 'undefined' && user && user.username) { %> <!-- Check if user and username are defined -->
+        <div class="user-name">Welcome, <%= user.username %></div>
+    <% } %>
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+
+</html>

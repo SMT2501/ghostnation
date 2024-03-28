@@ -1,0 +1,41 @@
+<!-- views/djs.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse DJs - BG</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <%- include('./partials/header.ejs', { user: user }) %>
+    <main>
+        <section class="djs-list">
+            <h2>Browse DJs</h2>
+            <ul>
+                <% users.forEach(user => { %>
+                    <li>
+                        <div class="dj-info">
+                            <img src="<%= user.profile_picture %>" alt="Profile Picture" class="profile-picture small">
+                            <div class="dj-details">
+                                <h3><%= user.username %></h3> <!-- Ensure this line is correct -->
+                                <p><%= user.bio %></p>
+                                <br>
+                                <br>
+                                <!-- Add more user details as needed -->
+                            </div>
+                        </div>
+                    </li>
+                <% }); %>
+            </ul>
+        </section>
+    </main>
+    
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+
+</html>

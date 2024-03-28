@@ -1,0 +1,238 @@
+/* public/css/styles.css */
+
+/* Reset default margin and padding */
+body, h1, h2, h3, p, ul, li {
+    margin: 0;
+    padding: 0;
+}
+
+/* Global styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background-color: #f5dada;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header styles */
+header {
+    background-color: #201849;
+    color: #fff;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+}
+
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline;
+    margin-left: 20px; /* Adjust as needed */
+}
+
+.nav-buttons {
+    margin-left: auto; /* Pushes the buttons to the right */
+}
+
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Main content styles */
+main {
+    flex: 1;
+    padding: 2rem;
+}
+
+/* Button styles */
+.btn {
+    display: inline-block;
+    background-color: #007bff;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #0056b3;
+}
+
+/* Profile page styles */
+.user-profile {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header {
+    text-align: center;
+}
+
+.profile-picture {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    border: 2px solid #007bff; /* Add border around profile picture */
+}
+.logo{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-left: 20px;
+    border: 3px solid #ffffff; /* Add border around profile picture */
+}
+.profile-picture.small {
+    width: 50px; /* Adjust the width as needed */
+    height: 50px; /* Adjust the height as needed */
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    border: 2px solid #007bff; /* Add border around profile picture */
+    /* Add any other styling properties as needed */
+}
+
+.profile-picture-link{
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 20px; /* Adjust margin as needed */
+    width: 25px; /* Adjust the width as needed */
+    height: 25px; /* Adjust the height as needed */
+    border-radius: 50%;
+    border: 2px solid #86420b; /* Add border around profile picture */
+}
+.places-worked {
+    margin-top: 2rem;
+}
+
+.places-worked h3 {
+    margin-bottom: 1rem;
+}
+
+.places-worked ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.places-worked ul li {
+    margin-bottom: 0.5rem;
+}
+
+.media {
+    margin-top: 2rem;
+}
+
+.media h3 {
+    margin-bottom: 1rem;
+}
+
+/* Footer styles */
+footer {
+    background-color: #111018;
+    color: #fff;
+    padding: 1rem;
+    text-align: center;
+    margin-top: auto;
+    flex-shrink: 0; /* Ensure the footer doesn't shrink */
+}
+
+section {
+    background-color: #fff;
+
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(137, 42, 192, 0.1); 
+}
+
+.edit-profile-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.edit-profile-picture{
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+}
+.edit-profile-form label {
+    display: block;
+    margin-bottom: 10px;
+}
+.edit-profile-form input[type="text"],
+.edit-profile-form textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+.edit-profile-form button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+.edit-profile-form button:hover {
+    background-color: #0056b3;
+}
+
+/* styles.css */
+
+.add-post-container {
+    width: 50%;
+    margin: 0 auto;
+}
+
+.add-post-title {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.add-post-content {
+    width: 100%;
+    height: 200px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    resize: vertical;
+}
+
+.upload-file {
+    margin-top: 20px;
+}
+
+.add-post-button {
+    margin-top: 20px;
+}
+
+
+/* Responsive design */
+@media only screen and (max-width: 768px) {
+    /* Adjust styles for smaller screens */
+    main {
+        padding: 1rem;
+    }
+}
+
+@media only screen and (max-width: 480px) {
+    /* Further adjustments for mobile screens */
+    .profile-picture {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+

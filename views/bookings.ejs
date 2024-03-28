@@ -1,0 +1,49 @@
+<!-- views/bookings.ejs -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings - YourDJPlatform</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <%- include('./partials/header.ejs') %>
+
+    <main>
+        <section class="bookings">
+            <h2>Bookings</h2>
+            <!-- Display any error messages -->
+            <% if (error) { %>
+                <p class="error-message"><%= error %></p>
+            <% } %>
+            <!-- Booking form -->
+            <form action="/bookings" method="POST">
+                <label for="bookingDate">Booking Date:</label>
+                <input type="date" id="bookingDate" name="bookingDate" required>
+                <label for="bookingTime">Booking Time:</label>
+                <input type="time" id="bookingTime" name="bookingTime" required>
+                <label for="bookingDuration">Booking Duration (in minutes):</label>
+                <input type="number" id="bookingDuration" name="bookingDuration" required>
+                <button type="submit" class="btn">Book DJ</button>
+            </form>
+            <!-- Display existing bookings -->
+            <ul>
+                <% bookings.forEach(booking => { %>
+                    <li>
+                        <p><strong>Booking ID:</strong> <%= booking.booking_id %></p>
+                        <p><strong>User:</strong> <%= booking.user_id %></p>
+                        <p><strong>Date:</strong> <%= booking.booking_date %></p>
+                        <p><strong>Time:</strong> <%= booking.booking_time %></p>
+                        <p><strong>Duration:</strong> <%= booking.booking_duration %> minutes</p>
+                        <p><strong>Status:</strong> <%= booking.status %></p>
+                    </li>
+                <% }); %>
+            </ul>
+        </section>
+    </main>
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+</html>
