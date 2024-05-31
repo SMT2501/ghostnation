@@ -14,17 +14,26 @@
 
     <main>
         <section class="add-post">
-            <form action="/add_post" method="POST" enctype="multipart/form-data">
+            <form method="POST" action="/add_post" enctype="multipart/form-data">
                 <div class="add-post-container">
                     <h2 class="add-post-title">Add New Post</h2>
-                    <textarea class="add-post-content" name="content" placeholder="Enter your post content here..." required></textarea>
+                    <input type="text" name="content_title" placeholder="Enter post title" required>
+                    <textarea class="add-post-content" name="content_text" placeholder="Enter your post content here..." required></textarea>
+                    <!-- File input field for video upload -->
                     <div class="upload-file">
-                        <label for="file">Upload File:</label>
-                        <input type="file" id="file" name="file">
+                        <label for="video">Upload Video:</label>
+                        <input type="file" id="video" name="video">
+                    </div>
+                    <!-- File input field for image upload -->
+                    <div class="upload-file">
+                        <label for="image">Upload Image:</label>
+                        <input type="file" id="image" name="image">
                     </div>
                     <button class="btn" type="submit">Add Post</button>
                 </div>
             </form>
+            
+                            
         </section>
     </main>
 

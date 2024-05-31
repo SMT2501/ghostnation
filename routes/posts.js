@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const isAuthenticated = require('./auth'); // Import authentication middleware
+const isAuthenticated = require('./auth'); // Correct import statement for authentication middleware
 const sqlite3 = require('sqlite3').verbose();
 const multer = require('multer'); // Import multer for handling file uploads
 const db = new sqlite3.Database('mydatabase.db');

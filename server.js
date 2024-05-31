@@ -7,10 +7,10 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const flash = require('connect-flash');
 const sqlite3 = require('sqlite3').verbose();
-const multer = require('multer'); // Import multer for handling file uploads
+const multer = require('multer');
 const fs = require('fs');
+const bcrypt = require('bcrypt'); // For hashing passwords
 const router = express.Router();
-
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,19 +21,25 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
 // Middleware for parsing incoming request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Initialize and configure session middleware
 app.use(session({
-    secret: 'secret',
+    secret: process.env.SESSION_SECRET || 'secret', // Move secret to environment variable
     resave: false,
     saveUninitialized: false,
     cookie: {
         maxAge: 7 * 24 * 60 * 60 * 1000 // Session duration set to 7 days (in milliseconds)
     }
 }));
+
+const expressFileUpload = require('express-fileupload');
+
+app.use(expressFileUpload());
+
 
 // Initialize and configure Passport middleware
 app.use(passport.initialize());
@@ -45,33 +51,79 @@ app.use(flash());
 // Initialize SQLite database
 const db = new sqlite3.Database('mydatabase.db');
 
-// Initialize multer for handling file uploads
-const upload = multer({ dest: 'public/images' }); // Destination folder for uploaded images
-
 // Multer configuration
-const add_post = multer({ 
-    dest: 'public/content', // Destination folder for uploaded files
-    limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB file size limit
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/content');
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname);
     }
 });
 
-// Route handler for rendering the index page
-app.get('/', (req, res) => {
-    //res.render('index', { user: req.user, path: req.path });
-    res.render('index', { user: req.user, path: req.path }); // Pass user and path
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 20 * 1024 * 1024 } // 20MB file size limit
 });
 
 
-app.get('/login', (req, res) => {
-    res.render('login', {  user: req.user, path: req.path }); // Pass the user variable
-});
+// Define a function to convert file paths to URLs
+function pathToUrl(filePath) {
+    const urlPath = filePath.replace(/\\/g, '/'); // Ensure paths are URL-friendly
+    return `http://localhost:${PORT}/public${urlPath.split('public')[1]}`;
+}
 
-app.post('/login', passport.authenticate('local', {
-    successRedirect: '/profile',
-    failureRedirect: '/login',
-    failureFlash: true
-}));
+// Route handler to add a new post
+app.post('/add_post', isAuthenticated, (req, res) => {
+    const { content_title, content_text } = req.body;
+    const userId = req.user.id;
+    let content_url = '';
+    let content_type = 'post'; // Default content type
+
+    if (req.files) {
+        const files = req.files;
+        const fileArray = [];
+
+        if (files.video) {
+            const videoPath = '/public/content/' + files.video.name;
+            files.video.mv('.' + videoPath, (err) => {
+                if (err) {
+                    console.error('Video upload error:', err);
+                    return res.status(500).send('Error uploading video.');
+                }
+            });
+            fileArray.push(videoPath);
+            content_type = 'clip';
+        }
+
+        if (files.image) {
+            const imagePath = '/public/content/' + files.image.name;
+            files.image.mv('.' + imagePath, (err) => {
+                if (err) {
+                    console.error('Image upload error:', err);
+                    return res.status(500).send('Error uploading image.');
+                }
+            });
+            fileArray.push(imagePath);
+            if (!files.video) {
+                content_type = 'post';
+            }
+        }
+
+        content_url = fileArray.join(',');
+    }
+
+    db.run('INSERT INTO dj_content (dj_id, content_title, content_text, content_url, content_type) VALUES (?, ?, ?, ?, ?)', 
+           [userId, content_title, content_text, content_url, content_type], function(err) {
+        if (err) {
+            console.error('Error adding post:', err);
+            return res.status(500).send('Error adding post.');
+        }
+
+        req.flash('success', 'Post added successfully!');
+        res.redirect('/profile');
+    });
+});
 
 // Passport Local Strategy for username/password authentication
 passport.use(new LocalStrategy({
@@ -79,20 +131,29 @@ passport.use(new LocalStrategy({
     passwordField: 'password',
     passReqToCallback: true // Pass request object to callback for flash messages
 }, (req, email, password, done) => {
-    // Check if the email and password match a user in the database
-    db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (error, user) => {
+    db.get('SELECT * FROM users WHERE email = ?', [email], (error, user) => {
         if (error) {
             console.error('Error querying user data:', error);
             return done(error);
         }
 
         if (!user) {
-            // User with the provided email and password not found
             return done(null, false, req.flash('error', 'Invalid email or password.'));
         }
 
-        // User authenticated successfully, return user object
-        return done(null, user);
+        // Compare hashed passwords
+        bcrypt.compare(password, user.password, (err, isMatch) => {
+            if (err) {
+                console.error('Error comparing passwords:', err);
+                return done(err);
+            }
+
+            if (!isMatch) {
+                return done(null, false, req.flash('error', 'Invalid email or password.'));
+            }
+
+            return done(null, user);
+        });
     });
 }));
 
@@ -102,7 +163,6 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-    // Query the database to retrieve user data based on userId
     db.get('SELECT * FROM users WHERE id = ?', [id], (error, user) => {
         if (error) {
             console.error('Error querying user data:', error);
@@ -113,37 +173,70 @@ passport.deserializeUser((id, done) => {
     });
 });
 
+// Route handler for rendering the index page
+app.get('/', (req, res) => {
+    res.render('index', { user: req.user, path: req.path });
+});
+
+app.get('/login', (req, res) => {
+    res.render('login', { user: req.user, path: req.path });
+});
+
+app.post('/login', passport.authenticate('local', {
+    successRedirect: '/profile',
+    failureRedirect: '/login',
+    failureFlash: true
+}));
+
 app.get('/signup', (req, res) => {
-    res.render('signup', {user: req.user, path: req.path});
+    res.render('signup', { user: req.user, path: req.path });
 });
 
 app.post('/signup', (req, res) => {
     const { username, email, password, bio } = req.body;
 
-    // Check if the email address already exists in the database
     db.get('SELECT * FROM users WHERE email = ?', [email], (error, existingUser) => {
         if (error) {
             console.error('Error checking existing email:', error);
-            return res.render('signup', { error: 'Error signing up. Please try again later.' });
+            return res.render('signup', { error: 'Error signing up. Please try again later.', user: req.user, path: req.path });
         }
 
         if (existingUser) {
-            // Email address already exists, display an error message
-            return res.render('signup', { error: 'Email address is already registered.' });
+            return res.render('signup', { error: 'Email address is already registered.', user: req.user, path: req.path });
         }
 
-        // Email address is unique, proceed with user registration
-        const sql = 'INSERT INTO users (username, email, password, bio) VALUES (?, ?, ?, ?)';
-        db.run(sql, [username, email, password, bio], function(error) {
-            if (error) {
-                console.error('Error inserting user data:', error);
+        bcrypt.hash(password, 10, (err, hashedPassword) => {
+            if (err) {
+                console.error('Error hashing password:', err);
                 return res.render('signup', { error: 'Error signing up. Please try again later.' });
             }
-            
-            console.log('User signed up successfully:', username);
-            res.redirect('/login');
+
+            const sql = 'INSERT INTO users (username, email, password, bio) VALUES (?, ?, ?, ?)';
+            db.run(sql, [username, email, hashedPassword, bio], function(error) {
+                if (error) {
+                    console.error('Error inserting user data:', error);
+                    return res.render('signup', { error: 'Error signing up. Please try again later.' });
+                }
+
+                console.log('User signed up successfully:', username);
+                res.redirect('/edit_profile', {user: req.user, path: req.path});
+            });
         });
     });
+});
+
+// Middleware to check if user is authenticated
+function isAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.redirect('/login');
+}
+
+// Logout route
+app.get('/logout', (req, res) => {
+    req.logout(() => {}); // Provide an empty callback function
+    res.redirect('/'); // Redirect to homepage
 });
 
 // Route to render the browse DJs page
@@ -160,114 +253,250 @@ app.get('/djs', (req, res) => {
     });
 });
 
-// Mount the notifications routes
+// Route handler to add a new post
+app.post('/add_post', isAuthenticated, (req, res) => {
+    const { content_title, content_text } = req.body;
+    const userId = req.user.id;
+    let content_url = '';
+    let content_type = 'post'; // Default content type
+
+    // Check if files are uploaded
+    if (req.files) {
+        const files = req.files;
+        const fileArray = [];
+
+        // Handle video upload
+        if (files.video) {
+            const videoPath = '/uploads/videos/' + files.video.name;
+            files.video.mv('.' + videoPath, (err) => {
+                if (err) {
+                    console.error('Video upload error:', err);
+                    return res.status(500).send('Error uploading video.');
+                }
+            });
+            fileArray.push(videoPath);
+            content_type = 'clip'; // Set content type to 'clip' for video
+        }
+
+        // Handle image upload
+        if (files.image) {
+            const imagePath = '/uploads/images/' + files.image.name;
+            files.image.mv('.' + imagePath, (err) => {
+                if (err) {
+                    console.error('Image upload error:', err);
+                    return res.status(500).send('Error uploading image.');
+                }
+            });
+            fileArray.push(imagePath);
+            if (!files.video) { // Only set to 'post' if no video is uploaded
+                content_type = 'post';
+            }
+        }
+
+        content_url = fileArray.join(',');
+    }
+
+    // Insert post into database
+    db.run('INSERT INTO dj_content (dj_id, content_title, content_text, content_url, content_type) VALUES (?, ?, ?, ?, ?)', 
+           [userId, content_title, content_text, content_url, content_type], function(err) {
+        if (err) {
+            console.error('Error adding post:', err);
+            return res.status(500).send('Error adding post.');
+        }
+
+        req.flash('success', 'Post added successfully!');
+        res.redirect('/profile');
+    });
+});
 
 
-
-// Route to render the profile page
 app.get('/profile', isAuthenticated, (req, res) => {
-    const userId = req.user.id; // Retrieve the user's ID from the session
-    // Query the database to retrieve user data based on userId
+    const userId = req.user.id;
+
     db.get('SELECT * FROM users WHERE id = ?', [userId], (error, user) => {
         if (error) {
             console.error('Error querying user data:', error);
-            return res.render('profile', { error: 'Error fetching user data.' });
+            return res.render('profile', { user: req.user, path: req.path, error: 'Error loading profile.' });
         }
-        // Render the profile page with user data
-        res.render('profile', {  user: req.user, path: req.path }); // Pass both user and req
 
-       // res.render('profile', { user });
-    });
-});
-
-// Add a new route for editing the profile
-app.get('/edit_profile', isAuthenticated, (req, res) => {
-    const userId = req.user.id; // Retrieve the user's ID from the session
-    const { username, bio, placesWorked } = req.body;
-    const oldProfilePicture = req.body.old_profile_picture; // Retrieve old profile picture path
-    
-    // Query the database to retrieve user data based on userId
-    db.get('SELECT * FROM users WHERE id = ?', [userId], (error, user) => {
-        if (error) {
-            console.error('Error querying user data:', error);
-            return res.render('edit_profile', { error: 'Error fetching user data.' });
-        }
-        // Convert placesWorked to string if it's an array
-        //const placesWorked = Array.isArray(user.placesWorked) ? user.placesWorked.join(', ') : user.placesWorked;
-        // Render the edit profile page with user data and any error message
-        res.render('edit_profile', { user, path: req.path, error: null });
-    });
-});
-
-// Route to render the profile picture edit page
-app.get('/edit_profile_picture', isAuthenticated, (req, res) => {
-    res.render('edit_profile_picture', {  user: req.user, path: req.path });
-});
-
-
-// Handle profile updates, including picture upload
-app.post('/edit_profile', isAuthenticated, upload.single('profile_picture'), (req, res) => {
-    const userId = req.user.id; // Retrieve the user's ID from the session
-    const { username, bio, placesWorked } = req.body;
-    const newProfilePicturePath = req.file ? req.file.path.replace('public', '') : null; // Get uploaded file path
-
-    // Retrieve the old profile picture path from the database
-    db.get('SELECT profile_picture FROM users WHERE id = ?', [userId], (error, row) => {
-        if (error) {
-            console.error('Error retrieving old profile picture path:', error);
-            return res.render('edit_profile', { error: 'Error updating user profile.', user: req.user }); // Pass req.user to retain user data
-        }
-        const oldProfilePicturePath = row.profile_picture;
-
-        // Update the user's information in the database
-        db.run('UPDATE users SET username = ?, bio = ?, profile_picture = ?, placesWorked = ? WHERE id = ?', 
-               [username, bio, newProfilePicturePath, placesWorked, userId], 
-               (updateError) => {
-            if (updateError) {
-                console.error('Error updating user data:', updateError);
-                return res.render('edit_profile', { error: 'Error updating user profile.', user: req.user }); // Pass req.user to retain user data
+        db.all('SELECT * FROM dj_content WHERE dj_id = ? ORDER BY upload_time DESC', [userId], (error, content) => {
+            if (error) {
+                console.error('Error querying content data:', error);
+                return res.render('profile', { user: req.user, error: 'Error loading profile content.' });
             }
 
-            // If there was an old profile picture path and it's different from the new one, remove the old picture
-            if (oldProfilePicturePath && oldProfilePicturePath !== newProfilePicturePath) {
-                // Delete the old profile picture from storage
-                fs.unlink(`public${oldProfilePicturePath}`, (unlinkError) => {
-                    if (unlinkError) {
-                        console.error('Error deleting old profile picture:', unlinkError);
-                    }
-                });
-            }
-
-            // Redirect to the profile page after successful update
-            res.redirect('/profile');
+            res.render('profile', { user: user, path: req.path, posts: content, success: req.flash('success'), error: req.flash('error') });
         });
     });
 });
 
-// Route to handle profile picture edit form submission
-app.post('/edit_profile_picture', isAuthenticated, upload.single('new_profile_picture'), (req, res) => {
-    const userId = req.user.id; // Retrieve the user's ID from the session
-    const removeProfilePicture = req.body.remove_profile_picture === 'on';
-    const newProfilePicturePath = req.file ? req.file.path.replace('public', '') : null; // Get uploaded file path
+// Route to render the DJ profile page
+app.get('/dj_profile/:id', isAuthenticated, (req, res) => {
+    const djId = req.params.id; // Retrieve the DJ ID from the URL parameter
+    let content = []; // Initialize content as an empty array
+    let bookings = []; // Initialize bookings as an empty array
 
-    // Update the user's profile picture in the database
-    let query = 'UPDATE users SET profile_picture = ? WHERE id = ?';
-    let params = [newProfilePicturePath, userId];
-
-    // If the user chose to remove the profile picture, set the profile_picture field to NULL
-    if (removeProfilePicture) {
-        query = 'UPDATE users SET profile_picture = NULL WHERE id = ?';
-        params = [userId];
-    }
-
-    // Execute the update query
-    db.run(query, params, (error) => {
-        if (error) {
-            console.error('Error updating profile picture:', error);
-            return res.render('edit_profile_picture', { error: 'Error updating profile picture.', user: req.user });
+    // Query the database to retrieve DJ details based on the ID
+    db.get('SELECT * FROM users WHERE id = ?', [djId], (error, dj) => {
+        if (error || !dj) {
+            console.error('Error querying DJ data:', error);
+            return res.render('dj_profile', {
+                user: req.user,
+                dj: null,
+                content: [],
+                bookings: [],
+                following: false,
+                path: req.path,
+                error: 'Error fetching DJ data.'
+            });
         }
 
-        // Redirect to the profile page after successful update
+        // Query to get DJ content
+        db.all('SELECT * FROM dj_content WHERE dj_id = ?', [dj.id], (err, contentData) => {
+            if (err) {
+                console.error('Error fetching DJ content:', err);
+                return res.render('dj_profile', {
+                    user: req.user,
+                    dj,
+                    content: [],
+                    bookings: [],
+                    following: false,
+                    path: req.path,
+                    error: 'Error fetching DJ content.'
+                });
+            }
+            content = contentData; // Assign the fetched content data to the content array
+
+            // Query to get confirmed bookings
+            db.all('SELECT * FROM bookings WHERE dj_id = ? AND status = "Confirmed"', [dj.id], (err, bookingsData) => {
+                if (err) {
+                    console.error('Error fetching confirmed bookings:', err);
+                    return res.render('dj_profile', {
+                        user: req.user,
+                        dj,
+                        content,
+                        bookings: [],
+                        following: false,
+                        path: req.path,
+                        error: 'Error fetching confirmed bookings.'
+                    });
+                }
+                bookings = bookingsData; // Assign the fetched bookings data to the bookings array
+
+                // Query to check if the current user is following this DJ
+                db.get('SELECT * FROM followings WHERE user_id = ? AND following_id = ?', [req.user.id, dj.id], (err, follow) => {
+                    if (err) {
+                        console.error('Error checking follow status:', err);
+                        return res.render('dj_profile', {
+                            user: req.user,
+                            dj,
+                            content,
+                            bookings,
+                            following: false,
+                            path: req.path,
+                            error: 'Error checking follow status.'
+                        });
+                    }
+                    const following = !!follow; // Convert result to boolean
+
+                    // Render the DJ profile page with DJ data, content, bookings, and follow status
+                    res.render('dj_profile', {
+                        user: req.user, // Pass the logged-in user
+                        dj, // Pass the DJ data
+                        content, // Pass the content array
+                        bookings, // Pass the bookings array
+                        following, // Pass the follow status
+                        path: req.path, // Pass the current path
+                        error: null // No error
+                    });
+                });
+            });
+        });
+    });
+});
+
+
+// Route to handle booking a DJ
+app.post('/book_dj/:username', isAuthenticated, (req, res) => {
+    const username = req.params.username;
+    const { date, venue, location, price, time, duration } = req.body;
+
+    // Query the database to get the DJ's ID
+    db.get('SELECT id FROM djs WHERE username = ?', [username], (error, dj) => {
+        if (error || !dj) {
+            console.error('Error querying DJ data:', error);
+            return res.redirect(`/dj_profile/${username}`);
+        }
+
+        const djId = dj.id;
+        const userId = req.user.id;
+
+        // Insert the booking into the database
+        db.run('INSERT INTO bookings (user_id, dj_id, date, venue, location, price, time, duration, confirmed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', 
+            [userId, djId, date, venue, location, price, time, duration, 0], (err) => {
+                if (err) {
+                    console.error('Error booking DJ:', err);
+                    return res.redirect(`/dj_profile/${username}`);
+                }
+                res.redirect(`/dj_profile/${username}`);
+            }
+        );
+    });
+});
+
+// Route to handle following/unfollowing a DJ
+app.post('/follow/:djId', isAuthenticated, (req, res) => {
+    const djId = req.params.djId;
+    db.run('INSERT INTO followings (user_id, following_id) VALUES (?, ?)', [req.user.id, djId], (err) => {
+        if (err) {
+            console.error('Error following DJ:', err);
+            return res.redirect(`/dj_profile/${djId}?error=follow`);
+        }
+        res.redirect(`/dj_profile/${djId}`);
+    });
+});
+
+app.post('/unfollow/:djId', isAuthenticated, (req, res) => {
+    const djId = req.params.djId;
+    db.run('DELETE FROM followings WHERE user_id = ? AND following_id = ?', [req.user.id, djId], (err) => {
+        if (err) {
+            console.error('Error unfollowing DJ:', err);
+            return res.redirect(`/dj_profile/${djId}?error=unfollow`);
+        }
+        res.redirect(`/dj_profile/${djId}`);
+    });
+});
+
+// Route to display the edit profile page
+app.get('/edit_profile', isAuthenticated, (req, res) => {
+    res.render('edit_profile', { user: req.user, path: req.path, success: req.flash('success'), error: req.flash('error') });
+});
+
+// Route to update profile information
+app.post('/update_profile', isAuthenticated, upload.single('profile_picture'), (req, res) => {
+    const userId = req.user.id;
+    const { username, bio } = req.body;
+
+    // If a new profile picture is uploaded, use its path, otherwise keep the existing one
+    const profile_picture = req.file ? pathToUrl(req.file.path) : req.user.profile_picture;
+
+    // If a new profile picture is uploaded, delete the old one
+    if (req.file && req.user.profile_picture) {
+        const oldProfilePicturePath = req.user.profile_picture.split('/public')[1];
+        fs.unlink(path.join(__dirname, 'public', oldProfilePicturePath), (err) => {
+            if (err) console.error('Error deleting old profile picture:', err);
+        });
+    }
+
+    const sql = 'UPDATE users SET username = ?, bio = ?, profile_picture = ? WHERE id = ?';
+    db.run(sql, [username, bio, profile_picture, userId], (error) => {
+        if (error) {
+            console.error('Error updating user data:', error);
+            req.flash('error', 'Error updating profile. Please try again later.');
+            return res.redirect('/edit_profile');
+        }
+
+        req.flash('success', 'Profile updated successfully.');
         res.redirect('/profile');
     });
 });
@@ -354,33 +583,11 @@ app.post('/create', isAuthenticated, (req, res) => {
     res.send('Creating a new post...');
 });
 
-// Define a route handler for rendering the add post page
+// Route handler to render the Add Post form
 app.get('/add_post', isAuthenticated, (req, res) => {
-    res.render('add_post', { error: null, user: req.user, path: req.path }); // Render the add_post EJS file
+    res.render('add_post', { user: req.user, path: req.path });
 });
 
-
-// Route handler for adding a post with video and image
-app.post('/add_post', isAuthenticated, upload.fields([{ name: 'video', maxCount: 1 }, { name: 'image', maxCount: 1 }]), (req, res) => {
-    // Extract post data from request body
-    const { content } = req.body;
-    
-    // Extract uploaded files
-    const videoFile = req.files['video'][0];
-    const imageFile = req.files['image'][0];
-    
-    // Logic for saving the post and uploaded files to the database
-    const sql = 'INSERT INTO dj_content (content, video_path, image_path, dj_id) VALUES (?, ?, ?, ?)';
-    const values = [content, videoFile.path, imageFile.path, req.user.id];
-    
-    db.run(sql, values, (error) => {
-        if (error) {
-            console.error('Error adding post to database:', error);
-            return res.status(500).json({ error: 'Error adding post to database' });
-        }
-        res.send('Post added successfully');
-    });
-});
 
 // Route handler for retrieving a specific post
 app.get('/add_post:id', (req, res) => {
@@ -402,20 +609,12 @@ app.delete('/add_post:id/delete', isAuthenticated, (req, res) => {
     // Logic for deleting a post
     res.send(`Deleting post with ID ${postId}...`);
 });
-// Middleware to check if user is authenticated
-function isAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    res.redirect('/login');
-}
 
-// Logout route
-app.get('/logout', (req, res) => {
-    req.logout(() => {}); // Provide an empty callback function
-    res.redirect('/'); // Redirect to homepage
+// Error handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something went wrong! Please try again later.');
 });
-
 
 
 // Start the server

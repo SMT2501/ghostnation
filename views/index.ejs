@@ -37,10 +37,6 @@
         </section>
     </main>
 
-    <!-- Display the user's name if available -->
-    <% if (typeof user !== 'undefined' && user && user.username) { %> <!-- Check if user and username are defined -->
-        <div class="user-name">Welcome, <%= user.username %></div>
-    <% } %>
 
     <%- include('./partials/footer.ejs') %>
 </body>

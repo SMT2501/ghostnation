@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DJ Profile - BG</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/script.js" defer></script>
+</head>
+
+<body>
+    <%- include('./partials/header.ejs', { user: user }) %>
+    <main>
+        <section class="dj-profile">
+            <div class="profile-header">
+                <img src="<%= user.profile_picture || '/public/images/profile.jpg' %>" alt="Profile Picture" class="profile-picture">
+                <h2><%= user.username %></h2>
+                <p>Bio: <%= user.bio %></p>
+                <button id="book-dj-btn">Book DJ</button>
+                <!-- Follow/Unfollow Button -->
+                <form id="follow-form" action="/<%= following ? 'unfollow' : 'follow' %>/<%= dj.id %>" method="POST">
+                    <button type="submit"><%= following ? 'Unfollow' : 'Follow' %></button>
+                </form>
+            </div>
+
+            <!-- Booking Form Popup -->
+            <div id="booking-form-popup" class="popup">
+                <div class="popup-content">
+                    <span class="close-btn" id="close-popup">&times;</span>
+                    <h3>Book DJ <%= dj.username %></h3>
+                    <form id="booking-form" action="/book_dj/<%= dj.id %>" method="POST" class="form">
+                        <label for="date">Date:</label>
+                        <input type="date" id="date" name="date" required>
+                        <label for="venue">Venue:</label>
+                        <input type="text" id="venue" name="venue" required>
+                        <label for="location">Location:</label>
+                        <input type="text" id="location" name="location" required>
+                        <label for="price">Price:</label>
+                        <input type="number" id="price" name="price" required>
+                        <label for="time">Time:</label>
+                        <input type="time" id="time" name="time" required>
+                        <label for="duration">Duration:</label>
+                        <input type="number" id="duration" name="duration" required>
+                        <button type="submit">Submit</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- DJ Content -->
+            <section class="dj-content">
+                <h3>DJ Content</h3>
+                <div class="content-grid">
+                    <% content.forEach(post => { %>
+                        <div class="content-item">
+                            <% if (post.type === 'image') { %>
+                                <img src="<%= post.path %>" alt="<%= post.caption %>">
+                            <% } else if (post.type === 'video') { %>
+                                <video controls>
+                                    <source src="<%= post.path %>" type="video/mp4">
+                                </video>
+                            <% } %>
+                            <p><%= post.caption %></p>
+                        </div>
+                    <% }); %>
+                </div>
+            </section>
+
+            <!-- Confirmed Bookings -->
+            <section class="confirmed-bookings">
+                <h3>Confirmed Bookings</h3>
+                <ul>
+                    <% bookings.forEach(booking => { %>
+                        <li>
+                            <p>Date: <%= booking.date %></p>
+                            <p>Venue: <%= booking.venue %></p>
+                            <p>Location: <%= booking.location %></p>
+                            <p>Price: <%= booking.price %></p>
+                            <p>Time: <%= booking.time %></p>
+                            <p>Duration: <%= booking.duration %> hours</p>
+                        </li>
+                    <% }); %>
+                </ul>
+            </section>
+        </section>
+    </main>
+
+    <%- include('./partials/footer.ejs') %>
+</body>
+
+</html>

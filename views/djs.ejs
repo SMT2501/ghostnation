@@ -18,20 +18,23 @@
             <ul>
                 <% users.forEach(user => { %>
                     <li>
-                        <div class="dj-info">
-                            <img src="<%= user.profile_picture %>" alt="Profile Picture" class="profile-picture small">
-                            <div class="dj-details">
-                                <h3><%= user.username %></h3> <!-- Ensure this line is correct -->
-                                <p><%= user.bio %></p>
-                                <br>
-                                <br>
-                                <!-- Add more user details as needed -->
+                        <a href="/dj_profile/<%= user.id %>">
+                            <div class="dj-info">
+                                <img src="<%= user.profile_picture || 'public/images/profile.jpg' %>" 
+                                alt="Profile Picture" class="profile-picture small">
+                                <div class="dj-details">
+                                    <h3><%= user.username %></h3>
+                                    <p><%= user.bio %></p>
+                                    <br>
+                                    <!-- Add more user details as needed -->
+                                </div>
                             </div>
-                        </div>
+                        </a>
                     </li>
                 <% }); %>
             </ul>
         </section>
+        
     </main>
     
 
